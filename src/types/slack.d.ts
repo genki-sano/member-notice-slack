@@ -203,7 +203,11 @@ type Confirm = {
  * Block Types
  */
 
-type KnownBlock = ActionsBlock | DividerBlock | SectionBlock | HeaderBlock
+export type KnownBlock =
+  | ActionsBlock
+  | DividerBlock
+  | SectionBlock
+  | HeaderBlock
 
 type Block = {
   type: string

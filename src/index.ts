@@ -1,3 +1,5 @@
+import { doPost } from './infrastructures/route'
+
 declare const global: {
   [x: string]: unknown
 }
@@ -13,9 +15,6 @@ global.doGet = (
 
 global.doPost = (
   e: GoogleAppsScript.Events.DoPost,
-): GoogleAppsScript.HTML.HtmlOutput => {
-  console.log('GAS got a post request!')
-
-  const params = JSON.stringify(e)
-  return HtmlService.createHtmlOutput(params)
+): GoogleAppsScript.Content.TextOutput => {
+  return doPost(e)
 }

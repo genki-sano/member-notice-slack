@@ -1,0 +1,12 @@
+# build
+dist
+
+# macOS
+*.DS_Store
+
+# Dependency directories
+node_modules
+
+# Google clasp
+.clasp.json
+appsscript.json

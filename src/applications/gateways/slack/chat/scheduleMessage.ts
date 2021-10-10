@@ -8,7 +8,7 @@ import { KnownBlock } from '@/types/slack'
 export type ChatScheduleMessageArguments = WebAPICallOptions & {
   channel: string
   post_at: number
-  text?: string
+  text: string
   as_user?: boolean
   attachments?: string
   blocks?: KnownBlock[]

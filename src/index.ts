@@ -1,4 +1,4 @@
-import { doPost } from './infrastructures/route'
+import { doPost, schedule } from '@/infrastructures/route'
 
 declare const global: {
   [x: string]: unknown
@@ -17,4 +17,8 @@ global.doPost = (
   e: GoogleAppsScript.Events.DoPost,
 ): GoogleAppsScript.Content.TextOutput => {
   return doPost(e)
+}
+
+global.schedule = (): GoogleAppsScript.Content.TextOutput => {
+  return schedule()
 }

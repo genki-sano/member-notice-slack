@@ -14,8 +14,19 @@ export class SpreadsheetClient implements ISpreadsheetClient {
     this.sheet = sheet
   }
 
-  public getValue(range: string): string {
-    const value = this.sheet.getRange(range).getValue()
-    return value
+  public getLastRow(): number {
+    return this.sheet.getLastRow()
+  }
+
+  public getValue(range: string): string | number {
+    return this.sheet.getRange(range).getValue()
+  }
+
+  public getValues(range: string): (string | number)[][] {
+    return this.sheet.getRange(range).getValues()
+  }
+
+  public setValue(range: string, value: unknown): void {
+    this.sheet.getRange(range).setValue(value)
   }
 }

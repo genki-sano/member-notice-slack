@@ -1,7 +1,77 @@
 import { Config } from '@/infrastructures/config'
 import { SlackClient } from '@/infrastructures/slack/client'
 import { SpreadsheetClient } from '@/infrastructures/spreadsheet/client'
+import { NoticeController } from '@/interfaces/controllers/notice'
 import { InteractionPayloads } from '@/types/slack'
+
+/**
+ * 当日の予約送信をセット
+ *
+ * @returns GoogleAppsScript.Content.TextOutput
+ */
+export const schedule = (): GoogleAppsScript.Content.TextOutput => {
+  // 平日のみ実行
+  if (isHoliday()) {
+    return ContentService.createTextOutput('')
+  }
+
+  // GASに設定した各種設定を取っておく
+  const config = new Config()
+
+  // Slack API への接続設定
+  const slackClient = new SlackClient(
+    config.slackBotToken,
+    config.slackUserToken,
+  )
+  // Spreadsheet API への接続設定
+  const ssReadClient = new SpreadsheetClient(
+    config.spreadsheetId,
+    config.ssReadSheetName,
+  )
+  const ssWriteClient = new SpreadsheetClient(
+    config.spreadsheetId,
+    config.ssWriteSheetName,
+  )
+
+  // 設定された行を実行する
+  const lastRow = ssReadClient.getLastRow()
+  const controller = new NoticeController(
+    slackClient,
+    ssReadClient,
+    ssWriteClient,
+  )
+  for (let row = 2; row <= lastRow; row++) {
+    controller.schedule(row)
+  }
+
+  return ContentService.createTextOutput('')
+}
+
+/**
+ * 休日・祝日を判定
+ *
+ * @returns boolean
+ */
+const isHoliday = (): boolean => {
+  const today = new Date()
+
+  // 土日か判定
+  const weekInt = today.getDay()
+  if (weekInt <= 0 || 6 <= weekInt) {
+    return true
+  }
+
+  // 祝日か判定
+  // NOTE: カレンダーからの取得情報を下層でも取りたい場合はclass化する
+  const calendarId = 'ja.japanese#holiday@group.v.calendar.google.com'
+  const calendar = CalendarApp.getCalendarById(calendarId)
+  const todayEvents = calendar.getEventsForDay(today)
+  if (todayEvents.length > 0) {
+    return true
+  }
+
+  return false
+}
 
 /**
  * Slack からの POST リクエストをハンドリングする関数
@@ -24,9 +94,13 @@ export const doPost = (
     config.slackUserToken,
   )
   // Spreadsheet API への接続設定
-  const spreadsheetClient = new SpreadsheetClient(
+  const ssReadClient = new SpreadsheetClient(
     config.spreadsheetId,
-    config.spreadsheetSheetName,
+    config.ssReadSheetName,
+  )
+  const ssWriteClient = new SpreadsheetClient(
+    config.spreadsheetId,
+    config.ssWriteSheetName,
   )
 
   if (e.postData.type === 'application/json') {
@@ -41,7 +115,8 @@ export const doPost = (
         e,
         config,
         slackClient,
-        spreadsheetClient,
+        ssReadClient,
+        ssWriteClient,
       )
     }
 
@@ -90,7 +165,8 @@ const executeEventApi = (
  * @param GoogleAppsScript.Events.DoPost e
  * @param Config config
  * @param SlackClient slackClient
- * @param SpreadsheetClient spreadsheetClient
+ * @param SpreadsheetClient ssReadClient
+ * @param SpreadsheetClient ssWriteClient
  * @returns GoogleAppsScript.Content.TextOutput
  *
  * @see https://api.slack.com/reference/interaction-payloads
@@ -99,7 +175,8 @@ const executeInteractivityAndShortcuts = (
   e: GoogleAppsScript.Events.DoPost,
   config: Config,
   slackClient: SlackClient,
-  spreadsheetClient: SpreadsheetClient,
+  ssReadClient: SpreadsheetClient,
+  ssWriteClient: SpreadsheetClient,
 ): GoogleAppsScript.Content.TextOutput => {
   const payload = JSON.parse(e.parameters.payload[0]) as InteractionPayloads
   // Verification Token の検証
@@ -125,7 +202,8 @@ const executeInteractivityAndShortcuts = (
     // TODO: action毎に分岐を作成
     if (payload.actions[0].action_id === 'action_id') {
       console.log(slackClient)
-      console.log(spreadsheetClient)
+      console.log(ssReadClient)
+      console.log(ssWriteClient)
       return ContentService.createTextOutput('')
     }
 

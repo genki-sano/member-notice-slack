@@ -1,0 +1,2 @@
+export const DEFAULT_NOTICE_HOURS = 9
+export const DEFAULT_NOTICE_MINUTES = 0

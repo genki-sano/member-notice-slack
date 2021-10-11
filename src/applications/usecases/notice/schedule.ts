@@ -25,7 +25,7 @@ export class NoticeScheduleUseCase {
     }
 
     // 設定に応じて送信予約をセットして、シートを更新する
-    this.scheduleMessage(setting, row, weekInt)
+    this.scheduleMessage(row, setting, weekInt)
   }
 
   /**
@@ -35,20 +35,18 @@ export class NoticeScheduleUseCase {
    * @param weekInt
    */
   private scheduleMessage(
-    setting: Setting,
     row: number,
+    setting: Setting,
     weekInt: number,
   ): void {
     // 除外設定の確認
     if (setting.excludeDays.includes(weekInt)) {
       // 設定を次の人に更新
       this.setNextMember(setting)
-
       // 設定後の値を取得
-      const updateSetting = this.settingRepos.getByRow(row)
-
+      const updatedSetting = this.settingRepos.getByRow(row)
       // 次の人に通知
-      this.scheduleMessage(updateSetting, row, weekInt)
+      this.scheduleMessage(row, updatedSetting, weekInt)
       return
     }
 

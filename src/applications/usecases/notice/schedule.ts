@@ -24,6 +24,7 @@ export class NoticeScheduleUseCase {
       return
     }
 
+    // 設定に応じて送信予約をセットして、シートを更新する
     this.scheduleMessage(setting, row, weekInt)
   }
 

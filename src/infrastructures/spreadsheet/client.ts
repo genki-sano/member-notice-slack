@@ -19,11 +19,11 @@ export class SpreadsheetClient implements ISpreadsheetClient {
   }
 
   public getValue(range: string): string | number {
-    return this.sheet.getRange(range).getValue()
+    return this.sheet.getRange(range).getDisplayValue()
   }
 
   public getValues(range: string): (string | number)[][] {
-    return this.sheet.getRange(range).getValues()
+    return this.sheet.getRange(range).getDisplayValues()
   }
 
   public setValue(range: string, value: unknown): void {

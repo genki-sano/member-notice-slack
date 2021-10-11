@@ -16,21 +16,26 @@ export class SettingGateway implements ISettingGateway {
   }
 
   public getByRow(row: number): Setting {
-    const values = this.readClient.getValues(`A${row}:H${row}`)
+    const values = this.readClient.getValues(`A${row}:I${row}`)
+    const targetValues = values[0]
 
-    const channelId = String(values[0][0])
-    const noticeHours = values[0][1]
-      ? Number(values[0][1])
+    const channelId = String(targetValues[0])
+    const noticeHours = targetValues[1]
+      ? Number(targetValues[1])
       : DEFAULT_NOTICE_HOURS
-    const noticeMinutes = values[0][2]
-      ? Number(values[0][2])
+    const noticeMinutes = targetValues[2]
+      ? Number(targetValues[2])
       : DEFAULT_NOTICE_MINUTES
-    const unannouncedDays = values[0][3] ? String(values[0][3]).split(',') : []
-    const memberId = String(values[0][4])
-    const excludeDays = values[0][5] ? String(values[0][5]).split(',') : []
-    const masterRow = Number(values[0][6])
-    const noticeRow = Number(values[0][7])
-    const lastMemberRow = Number(values[0][8])
+    const unannouncedDays = targetValues[3]
+      ? String(targetValues[3]).split(',')
+      : []
+    const memberId = String(targetValues[4])
+    const excludeDays = targetValues[5]
+      ? String(targetValues[5]).split(',')
+      : []
+    const masterRow = Number(targetValues[6])
+    const noticeRow = Number(targetValues[7])
+    const lastMemberRow = Number(targetValues[8])
 
     return new Setting(
       channelId,

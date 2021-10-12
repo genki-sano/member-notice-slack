@@ -2,7 +2,7 @@ import {
   WebAPICallOptions,
   WebAPICallResult,
 } from '@/interfaces/gateways/slack/client'
-import { KnownBlock } from '@/types/slack'
+import { Block, KnownBlock } from '@/types/slack'
 
 // @see https://api.slack.com/methods/chat.scheduleMessage#args
 export type ChatScheduleMessageArguments = WebAPICallOptions & {
@@ -11,7 +11,7 @@ export type ChatScheduleMessageArguments = WebAPICallOptions & {
   text: string
   as_user?: boolean
   attachments?: string
-  blocks?: KnownBlock[]
+  blocks?: (KnownBlock | Block)[]
   link_names?: boolean
   parse?: string
   reply_broadcast?: boolean

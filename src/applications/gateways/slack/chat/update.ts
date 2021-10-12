@@ -2,7 +2,7 @@ import {
   WebAPICallOptions,
   WebAPICallResult,
 } from '@/interfaces/gateways/slack/client'
-import { KnownBlock } from '@/types/slack'
+import { Block, KnownBlock } from '@/types/slack'
 
 // @see https://api.slack.com/methods/chat.update#args
 export type ChatUpdateArguments = WebAPICallOptions & {
@@ -10,7 +10,7 @@ export type ChatUpdateArguments = WebAPICallOptions & {
   ts: string
   as_user?: boolean
   attachments?: string
-  blocks?: KnownBlock[]
+  blocks?: (KnownBlock | Block)[]
   file_ids?: string[]
   link_names?: boolean
   parse?: string

@@ -2,14 +2,14 @@ import {
   WebAPICallOptions,
   WebAPICallResult,
 } from '@/interfaces/gateways/slack/client'
-import { KnownBlock } from '@/types/slack'
+import { Block, KnownBlock } from '@/types/slack'
 
 // @see https://api.slack.com/methods/chat.postMessage#args
 export type ChatPostMessageArguments = WebAPICallOptions & {
   channel: string
   as_user?: boolean
   attachments?: string
-  blocks?: KnownBlock[]
+  blocks?: (KnownBlock | Block)[]
   container_id?: string
   file_annotation?: string
   icon_emoji?: string

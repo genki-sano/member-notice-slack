@@ -1,8 +1,12 @@
+import { NoticeNextMemberUseCase } from '@/applications/usecases/notice/nextMember'
 import { NoticeScheduleUseCase } from '@/applications/usecases/notice/schedule'
 import { ISlackClient } from '@/interfaces/gateways/slack/client'
+import { ChatPostMessageGateway } from '@/interfaces/gateways/slack/chat/postMessage'
+import { ChatScheduleMessageGateway } from '@/interfaces/gateways/slack/chat/scheduleMessage'
+import { ChatUpdateGateway } from '@/interfaces/gateways/slack/chat/update'
 import { ISpreadsheetClient } from '@/interfaces/gateways/spreadsheet/client'
-import { ChatScheduleMessageGateway } from '../gateways/slack/chat/scheduleMessage'
-import { SettingGateway } from '../gateways/spreadsheet/setting'
+import { SettingGateway } from '@/interfaces/gateways/spreadsheet/setting'
+import { BlockActionsPayloads } from '@/types/slack'
 
 export class NoticeController {
   private readonly slackClient: ISlackClient
@@ -25,5 +29,14 @@ export class NoticeController {
       new SettingGateway(this.ssReadClient, this.ssWriteClient),
     )
     usecase.execute(row)
+  }
+
+  public nextMember(payload: BlockActionsPayloads): void {
+    const usecase = new NoticeNextMemberUseCase(
+      new ChatPostMessageGateway(this.slackClient),
+      new ChatUpdateGateway(this.slackClient),
+      new SettingGateway(this.ssReadClient, this.ssWriteClient),
+    )
+    usecase.execute(payload.channel.id, payload.user.id, payload.message)
   }
 }

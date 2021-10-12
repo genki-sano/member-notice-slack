@@ -1,23 +1,35 @@
-import { IChatScheduleMessageGateway } from '@/applications/gateways/slack/chat/scheduleMessage'
+import { IChatPostMessageGateway } from '@/applications/gateways/slack/chat/postMessage'
+import { IChatUpdateGateway } from '@/applications/gateways/slack/chat/update'
 import { ISettingGateway } from '@/applications/gateways/spreadsheet/setting'
 import { ACTION_NOTICE_NEXT_MEMBER } from '@/constants/action'
 import { Setting } from '@/domains/setting'
+import { MessageAttachment } from '@/types/slack'
 
-export class NoticeScheduleUseCase {
-  private readonly chatScheduleMessageRepos: IChatScheduleMessageGateway
+export class NoticeNextMemberUseCase {
+  private readonly chatPostMessageRepos: IChatPostMessageGateway
+  private readonly chatUpdateGateway: IChatUpdateGateway
   private readonly settingRepos: ISettingGateway
 
   constructor(
-    chatScheduleMessageRepos: IChatScheduleMessageGateway,
+    chatScheduleMessageRepos: IChatPostMessageGateway,
+    chatUpdateGateway: IChatUpdateGateway,
     settingRepos: ISettingGateway,
   ) {
-    this.chatScheduleMessageRepos = chatScheduleMessageRepos
+    this.chatPostMessageRepos = chatScheduleMessageRepos
+    this.chatUpdateGateway = chatUpdateGateway
     this.settingRepos = settingRepos
   }
 
-  public execute(row: number): void {
+  public execute(
+    channelId: string,
+    userId: string,
+    messageAtt: MessageAttachment,
+  ): void {
     // 設定情報を取得
-    const setting = this.settingRepos.getByRow(row)
+    const setting = this.settingRepos.getByChannelId(channelId)
+    if (!setting) {
+      return
+    }
 
     // 非通知設定の確認
     const weekInt = new Date().getDay()
@@ -26,35 +38,45 @@ export class NoticeScheduleUseCase {
     }
 
     // 設定に応じて送信予約をセットして、シートを更新する
-    this.scheduleMessage(row, setting, weekInt)
+    this.postMessage(channelId, userId, messageAtt, setting, weekInt)
   }
 
   /**
-   * 通知の予約送信をセット
+   * 通知を送信
+   * @param channelId
+   * @param userId
+   * @param messageAtt
    * @param setting
-   * @param row
    * @param weekInt
    */
-  private scheduleMessage(
-    row: number,
+  private postMessage(
+    channelId: string,
+    userId: string,
+    messageAtt: MessageAttachment,
     setting: Setting,
     weekInt: number,
   ): void {
+    if (!messageAtt.ts || !messageAtt.blocks) {
+      return
+    }
+
     // 除外設定の確認
     if (setting.excludeDays.includes(weekInt)) {
       // 設定を次の人に更新
       this.setNextMember(setting)
       // 設定後の値を取得
-      const updatedSetting = this.settingRepos.getByRow(row)
+      const updatedSetting = this.settingRepos.getByChannelId(channelId)
+      if (!updatedSetting) {
+        return
+      }
       // 次の人に通知
-      this.scheduleMessage(row, updatedSetting, weekInt)
+      this.postMessage(channelId, userId, messageAtt, updatedSetting, weekInt)
       return
     }
 
     // 通知のスケジュールをセット
-    this.chatScheduleMessageRepos.execute({
+    this.chatPostMessageRepos.execute({
       channel: setting.channelId,
-      post_at: this.createPostTs(setting.noticeHours, setting.noticeMinutes),
       text: '本日の朝会のファシリテーションをお願いします！',
       blocks: [
         {
@@ -100,6 +122,23 @@ export class NoticeScheduleUseCase {
       ],
     })
 
+    // クリックしたメッセージの修正
+    this.chatUpdateGateway.execute({
+      channel: setting.channelId,
+      ts: messageAtt.ts,
+      text: messageAtt.text,
+      blocks: [
+        messageAtt.blocks[0],
+        {
+          type: 'section',
+          text: {
+            type: 'mrkdwn',
+            text: `<@${userId}>さんが休みですをクリックしました`,
+          },
+        },
+      ],
+    })
+
     // 次の人になるよう設定を変更
     this.setNextMember(setting)
   }
@@ -111,20 +150,5 @@ export class NoticeScheduleUseCase {
   private setNextMember(setting: Setting): void {
     const nextNoticeRow = setting.isLastRow ? 2 : setting.noticeRow + 1
     this.settingRepos.update(setting.masterRow, nextNoticeRow)
-  }
-
-  /**
-   * 予約送信したい時間のUNIXタイムスタンプを作成
-   * @param h
-   * @param m
-   * @returns
-   */
-  private createPostTs(h: number, m: number) {
-    const today = new Date()
-    today.setHours(h)
-    today.setMinutes(m)
-    today.setMilliseconds(0)
-
-    return Math.floor(today.getTime() / 1000)
   }
 }

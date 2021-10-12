@@ -1,3 +1,4 @@
+import { ACTION_NOTICE_NEXT_MEMBER } from '@/constants/action'
 import { Config } from '@/infrastructures/config'
 import { SlackClient } from '@/infrastructures/slack/client'
 import { SpreadsheetClient } from '@/infrastructures/spreadsheet/client'
@@ -199,11 +200,16 @@ const executeInteractivityAndShortcuts = (
   // Block Kit (message 内の blocks) 内の
   // ボタンクリック・セレクトメニューのアイテム選択イベント
   if (payload.type === 'block_actions') {
-    // TODO: action毎に分岐を作成
-    if (payload.actions[0].action_id === 'action_id') {
-      console.log(slackClient)
-      console.log(ssReadClient)
-      console.log(ssWriteClient)
+    if (payload.actions[0].action_id === ACTION_NOTICE_NEXT_MEMBER) {
+      // 平日のみ実行
+      if (!isHoliday()) {
+        const controller = new NoticeController(
+          slackClient,
+          ssReadClient,
+          ssWriteClient,
+        )
+        controller.nextMember(payload)
+      }
       return ContentService.createTextOutput('')
     }
 
